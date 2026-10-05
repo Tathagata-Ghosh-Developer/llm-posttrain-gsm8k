@@ -1,0 +1,18 @@
+{
+  "name": "base_4shot",
+  "model": "Qwen2.5-0.5B",
+  "params": 494032768,
+  "n_eval": 1319,
+  "fewshot": 4,
+  "greedy_pass@1": 0.34950720242608035,
+  "greedy_format_rate": 0.9408642911296436,
+  "greedy_mean_tokens": 103.5087187263078,
+  "n_samples": 8,
+  "temperature": 0.7,
+  "max_new_tokens": 300,
+  "seconds_greedy": 110.5,
+  "seconds_sampling": 792.7,
+  "pass@1": 0.265068233510235,
+  "pass@4": 0.5114913895808513,
+  "pass@8": 0.6345716451857468
+}

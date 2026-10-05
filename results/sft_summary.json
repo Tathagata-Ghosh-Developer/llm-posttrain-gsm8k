@@ -1,0 +1,22 @@
+{
+  "stage": "sft",
+  "init": "Qwen2.5-0.5B",
+  "params": 494032768,
+  "train_examples": 7473,
+  "examples_seen": 7424,
+  "optimizer_steps": 116,
+  "effective_batch": 64,
+  "train_seconds": 96.5,
+  "config": {
+    "seed": 0,
+    "limit": null,
+    "epochs": 1,
+    "micro_batch": 8,
+    "grad_accum": 8,
+    "lr": 1e-05,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.0,
+    "max_grad_norm": 1.0,
+    "max_len": 512
+  }
+}

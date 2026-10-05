@@ -1,0 +1,26 @@
+{
+  "stage": "grpo",
+  "init": "sft",
+  "params": 494032768,
+  "steps": 116,
+  "questions_seen": 3712,
+  "completions_sampled": 29696,
+  "train_seconds": 1787.2,
+  "config": {
+    "seed": 0,
+    "question_offset": 2000,
+    "questions_per_step": 32,
+    "group_size": 8,
+    "temperature": 1.0,
+    "max_new_tokens": 256,
+    "lr": 2e-06,
+    "warmup_steps": 5,
+    "clip_eps": 0.2,
+    "kl_beta": 0.04,
+    "minibatch": 64,
+    "micro_batch": 8,
+    "max_grad_norm": 1.0,
+    "max_steps": 200,
+    "time_budget_min": 30
+  }
+}
