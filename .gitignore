@@ -1,0 +1,13 @@
+notes/
+checkpoints/
+ckpt/
+*.safetensors
+*.bin
+*.pt
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+hf/
+logs/
+*.FAILED

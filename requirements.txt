@@ -1,0 +1,8 @@
+# torch from the CUDA 12.4 wheel index: --index-url https://download.pytorch.org/whl/cu124
+torch==2.5.1
+transformers==4.46.3
+datasets==3.1.0
+numpy==1.26.4
+matplotlib
+pyyaml
+pytest
