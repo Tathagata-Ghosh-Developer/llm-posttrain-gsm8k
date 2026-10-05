@@ -1,0 +1,17 @@
+seed: 0
+# pair construction (samples from the SFT model on training questions)
+n_questions: 1536
+samples_per_question: 8
+sample_temperature: 0.8
+max_new_tokens: 256
+gen_batch: 64
+pairs_per_question: 2
+val_fraction: 0.1
+# optimisation
+beta: 0.1
+lr: 2.0e-6
+epochs: 2
+micro_batch: 8       # pairs per forward pass (16 sequences)
+grad_accum: 4        # effective batch 32 pairs
+warmup_ratio: 0.1
+max_grad_norm: 1.0

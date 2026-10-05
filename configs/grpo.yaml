@@ -1,0 +1,15 @@
+seed: 0
+question_offset: 2000   # skip the training questions used for DPO pairs
+questions_per_step: 32
+group_size: 8           # G completions per question -> 256 per step
+temperature: 1.0        # sample from the policy itself so log-probs match the sampler
+max_new_tokens: 256
+lr: 2.0e-6
+warmup_steps: 5
+clip_eps: 0.2
+kl_beta: 0.04
+minibatch: 64           # sequences per optimizer step -> 4 updates per sampled batch
+micro_batch: 8
+max_grad_norm: 1.0
+max_steps: 200
+time_budget_min: 32     # stop sampling new batches after this much wall-clock

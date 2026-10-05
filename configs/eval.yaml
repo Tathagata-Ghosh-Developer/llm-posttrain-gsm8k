@@ -1,0 +1,8 @@
+seed: 0
+n_eval: 500          # first 500 GSM8K test problems, identical for every model
+max_new_tokens: 300
+greedy_batch: 250    # prompts per generate() call
+n_samples: 8         # samples per problem for pass@k
+temperature: 0.7
+sample_batch: 64     # prompts per call -> 512 sequences
+ks: [1, 4, 8]

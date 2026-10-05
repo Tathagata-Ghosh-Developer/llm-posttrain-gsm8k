@@ -1,0 +1,10 @@
+seed: 0
+limit: null          # null = all 7,473 GSM8K training problems
+epochs: 1
+micro_batch: 8
+grad_accum: 8        # effective batch 64 sequences
+lr: 1.0e-5
+warmup_ratio: 0.03
+weight_decay: 0.0
+max_grad_norm: 1.0
+max_len: 512
