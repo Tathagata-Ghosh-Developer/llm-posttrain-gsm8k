@@ -21,11 +21,12 @@ def test_sft_loss_ignores_masked_positions():
     labels = torch.tensor([[-100, -100, -100, 2, 5, -100]])
     base, _ = sft_loss(logits, labels)
     changed = logits.clone()
-    changed[0, 0] += 10.0  # predicts token 1, which is a prompt token
-    changed[0, 5] += 10.0  # last position predicts nothing
+    # log_softmax is shift-invariant, so perturb a single vocabulary entry
+    changed[0, 0, 2] += 10.0  # position 0 predicts token 1, a prompt token
+    changed[0, 5, 2] += 10.0  # the last position predicts nothing
     other, _ = sft_loss(changed, labels)
     assert torch.allclose(base, other)
-    changed[0, 3] += 10.0  # predicts token 4, a target: loss must change
+    changed[0, 3, 0] += 10.0  # position 3 predicts token 4, a target: loss must change
     assert not torch.allclose(base, sft_loss(changed, labels)[0])
 
 
