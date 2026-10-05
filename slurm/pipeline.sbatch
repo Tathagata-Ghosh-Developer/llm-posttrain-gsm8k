@@ -54,6 +54,12 @@ lane_a() {
   # reference only: the base model with a 4-shot prompt (every other row is zero-shot)
   run "$RES/eval_base_4shot.json" python -m src.evaluate --config configs/eval.yaml --model "$BASE" \
       --name base_4shot --results "$RES" --set fewshot=4 ${EVAL_SET:-}
+  # DPO variant with an NLL term on the chosen answers, trained on the same preference pairs
+  [ -e "$CK/dpo/pairs.jsonl" ] && mkdir -p "$CK/dpo_nll" && cp -n "$CK/dpo/pairs.jsonl" "$CK/dpo_nll/"
+  run "$CK/dpo_nll/DONE" python -m src.dpo --config configs/dpo.yaml --model "$CK/sft" --out "$CK/dpo_nll" \
+      --name dpo_nll --results "$RES" --set nll_weight=1.0 ${DPO_SET:-} &&
+  run "$RES/eval_dpo_nll.json" python -m src.evaluate --config configs/eval.yaml --model "$CK/dpo_nll" \
+      --name dpo_nll --results "$RES" --set ${EVAL_SET:-}
 }
 
 lane_b() {

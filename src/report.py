@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-STAGES = ["base", "base_4shot", "sft", "dpo", "grpo"]
+STAGES = ["base", "base_4shot", "sft", "dpo", "dpo_nll", "grpo"]
 
 
 def read_csv(path):
@@ -60,8 +60,10 @@ def plots(results_dir):
         fig.tight_layout()
         fig.savefig(os.path.join(results_dir, "sft_loss.png"), dpi=150)
 
-    path = os.path.join(results_dir, "dpo_log.csv")
-    if os.path.exists(path):
+    for name, title in [("dpo", "DPO"), ("dpo_nll", "DPO + NLL")]:
+        path = os.path.join(results_dir, f"{name}_log.csv")
+        if not os.path.exists(path):
+            continue
         log = read_csv(path)
         steps = [r["step"] for r in log]
         fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 3.5))
@@ -69,14 +71,14 @@ def plots(results_dir):
         a1.plot(steps, [r["rejected_reward"] for r in log], label="rejected")
         a1.plot(steps, [r["margin"] for r in log], label="margin")
         a1.axhline(0, color="grey", lw=0.5)
-        a1.set(xlabel="optimizer step", ylabel="implicit reward (beta * log-ratio)", title="DPO rewards")
+        a1.set(xlabel="optimizer step", ylabel="implicit reward (beta * log-ratio)", title=f"{title} rewards")
         a1.legend()
         a2.plot(steps, [r["reward_acc"] for r in log], alpha=0.4, label="per batch")
         a2.plot(steps, moving_average([r["reward_acc"] for r in log], 10), lw=2, label="10-step mean")
-        a2.set(xlabel="optimizer step", ylabel="reward accuracy", title="DPO reward accuracy (train batches)")
+        a2.set(xlabel="optimizer step", ylabel="reward accuracy", title=f"{title} reward accuracy (train batches)")
         a2.legend()
         fig.tight_layout()
-        fig.savefig(os.path.join(results_dir, "dpo_margins.png"), dpi=150)
+        fig.savefig(os.path.join(results_dir, f"{name}_margins.png"), dpi=150)
 
     path = os.path.join(results_dir, "grpo_log.csv")
     if os.path.exists(path):
