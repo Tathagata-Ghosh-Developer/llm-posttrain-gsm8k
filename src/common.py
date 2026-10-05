@@ -150,7 +150,7 @@ class CsvLog:
             self.file = open(self.path, "w", newline="")
             self.writer = csv.DictWriter(self.file, fieldnames=list(row))
             self.writer.writeheader()
-        self.writer.writerow({k: round(v, 6) if isinstance(v, float) else v for k, v in row.items()})
+        self.writer.writerow({k: float(f"{v:.6g}") if isinstance(v, float) else v for k, v in row.items()})
         self.file.flush()
 
 
