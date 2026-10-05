@@ -9,6 +9,7 @@ pairs_per_question: 2
 val_fraction: 0.1
 # optimisation
 beta: 0.1
+nll_weight: 0.0      # > 0 adds a per-token NLL term on the chosen answer (RPO-style variant)
 lr: 2.0e-6
 epochs: 2
 micro_batch: 8       # pairs per forward pass (16 sequences)

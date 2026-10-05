@@ -47,14 +47,16 @@ def tokenize_pair(tok, pair):
 
 
 def sequence_logprobs(model, tok, batch, device):
-    """Summed log-prob of chosen and rejected completions given the prompt, each (B,)."""
+    """Summed log-probs of chosen and rejected completions given the prompt, each (B,),
+    plus the number of chosen-completion tokens (B,)."""
     prompts = [p for p, _, _ in batch]
     completions = [c for _, c, _ in batch] + [r for _, _, r in batch]
     ids, attention_mask, mask = build_batch(prompts + prompts, completions, tok.pad_token_id, device)
     with autocast(device):
         logp = token_logprobs(model, ids, attention_mask)
     seq = (logp * mask).sum(dim=1)
-    return seq[: len(batch)], seq[len(batch) :]
+    n = len(batch)
+    return seq[:n], seq[n:], mask[:n].sum(dim=1)
 
 
 def main():
@@ -67,14 +69,21 @@ def main():
     tok = load_tokenizer(args.model)
     model = load_model(args.model, torch.float32, device)
 
-    t0 = time.time()
-    rows = shuffled_train(cfg["seed"])[: cfg["n_questions"]]
-    pairs, pair_stats = make_pairs(model, tok, rows, cfg)
-    pair_stats["seconds"] = round(time.time() - t0, 1)
+    name = args.name or "dpo"
+    pairs_path = os.path.join(args.out, "pairs.jsonl")
+    if os.path.exists(pairs_path):  # reuse pairs sampled earlier from the same SFT model
+        with open(pairs_path) as f:
+            pairs = [json.loads(line) for line in f]
+        pair_stats = {"pairs": len(pairs), "reused_pairs": True}
+    else:
+        t0 = time.time()
+        rows = shuffled_train(cfg["seed"])[: cfg["n_questions"]]
+        pairs, pair_stats = make_pairs(model, tok, rows, cfg)
+        pair_stats["seconds"] = round(time.time() - t0, 1)
+        with open(pairs_path, "w") as f:
+            for p in pairs:
+                f.write(json.dumps(p) + "\n")
     print(json.dumps(pair_stats), flush=True)
-    with open(os.path.join(args.out, "pairs.jsonl"), "w") as f:
-        for p in pairs:
-            f.write(json.dumps(p) + "\n")
 
     random.Random(cfg["seed"]).shuffle(pairs)
     n_val = max(1, int(cfg["val_fraction"] * len(pairs)))
@@ -89,7 +98,7 @@ def main():
     @torch.no_grad()
     def all_logprobs(examples):
         out = [sequence_logprobs(model, tok, examples[i : i + micro], device) for i in range(0, len(examples), micro)]
-        return torch.cat([c for c, _ in out]), torch.cat([r for _, r in out])
+        return torch.cat([c for c, _, _ in out]), torch.cat([r for _, r, _ in out])
 
     ref_train, ref_val = all_logprobs(train), all_logprobs(val)
 
@@ -100,7 +109,7 @@ def main():
     total_steps = steps_per_epoch * cfg["epochs"]
     warmup = max(1, int(cfg["warmup_ratio"] * total_steps))
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: warmup_cosine(s, total_steps, warmup))
-    log = CsvLog(os.path.join(args.results, "dpo_log.csv"))
+    log = CsvLog(os.path.join(args.results, f"{name}_log.csv"))
     gen = torch.Generator().manual_seed(cfg["seed"])
     beta, step = cfg["beta"], 0
     for epoch in range(cfg["epochs"]):
@@ -110,8 +119,11 @@ def main():
             losses, chosen_r, rejected_r = [], [], []
             for m in range(0, batch, micro):
                 sub = idx[m : m + micro]
-                pc, pr = sequence_logprobs(model, tok, [train[i] for i in sub], device)
+                pc, pr, n_chosen = sequence_logprobs(model, tok, [train[i] for i in sub], device)
                 loss, rc, rr = dpo_loss(pc, pr, ref_train[0][sub], ref_train[1][sub], beta)
+                if cfg["nll_weight"] > 0:
+                    # RPO-style term: per-token NLL of the chosen answer keeps it likely in absolute terms
+                    loss = loss + cfg["nll_weight"] * (-pc / n_chosen).mean()
                 (loss * len(sub) / batch).backward()
                 losses.append(loss.item() * len(sub) / batch)
                 chosen_r.append(rc)
@@ -133,13 +145,13 @@ def main():
     with torch.no_grad():
         pc, pr = all_logprobs(val)
         _, rc, rr = dpo_loss(pc, pr, ref_val[0], ref_val[1], beta)
-    summary = {"stage": "dpo", "init": label(args.model), "params": count_params(model), **pair_stats,
+    summary = {"stage": name, "init": label(args.model), "params": count_params(model), **pair_stats,
                "train_pairs": len(train), "val_pairs": len(val), "optimizer_steps": step,
                "effective_batch_pairs": batch, "train_seconds": round(train_seconds, 1),
                "val_reward_acc": (rc > rr).float().mean().item(), "val_margin": (rc - rr).mean().item(),
                "val_chosen_reward": rc.mean().item(), "val_rejected_reward": rr.mean().item(), "config": cfg}
     print(json.dumps(summary, indent=2))
-    save_json(summary, os.path.join(args.results, "dpo_summary.json"))
+    save_json(summary, os.path.join(args.results, f"{name}_summary.json"))
     save_checkpoint(model, tok, args.out)
 
 
