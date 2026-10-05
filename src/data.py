@@ -3,10 +3,11 @@ import random
 import re
 
 import numpy as np
-from datasets import load_dataset
 
 PROMPT = "Question: {question}\nAnswer:"
-STOP_STRINGS = ["Question:"]  # a base model keeps writing new questions; stop there
+# a base model keeps inventing new questions ("Question: ..." or "[Question] ..."); stop there
+STOP_STRINGS = ["Question:", "[Question]"]
+_NEXT_QUESTION = re.compile(r"Question:|\[Question\]")
 
 _CALCULATOR = re.compile(r"<<[^>]*>>")  # GSM8K annotations such as <<48/2=24>>
 _NUMBER = re.compile(r"-?[\d,]*\.?\d+")
@@ -40,8 +41,8 @@ def gold_answer(answer):
 
 
 def truncate_completion(text):
-    """Cut a completion at the next 'Question:' and right after the '#### x' line."""
-    text = text.split("Question:")[0]
+    """Cut a completion at the next invented question and right after the '#### x' line."""
+    text = _NEXT_QUESTION.split(text, maxsplit=1)[0]
     if "####" in text:
         head, tail = text.split("####", 1)
         text = head + "####" + tail.split("\n")[0]
@@ -67,6 +68,8 @@ def pass_at_k(n, c, k):
 
 
 def load_gsm8k(split, limit=None):
+    from datasets import load_dataset  # imported here so the scoring functions need only numpy
+
     rows = [
         {
             "question": r["question"],

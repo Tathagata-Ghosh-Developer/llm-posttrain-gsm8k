@@ -32,6 +32,8 @@ def test_extract_answer_ignores_text_after_answer_line_and_next_question():
     assert truncate_completion(text) == " 4 * 3 = 12\n#### 12"
     assert extract_answer(text) == "12"
     assert extract_answer(" So 8 eggs.\n\nQuestion: A farm has 50 cows") == "8"
+    # the base model often writes "The answer is X." and then an invented "[Question] ..."
+    assert extract_answer(" 16 - 3 = 13. The answer is 13.\n[Question]A farm has 50 cows") == "13"
 
 
 def test_is_correct():
