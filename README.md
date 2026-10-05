@@ -63,7 +63,7 @@ Stage details (all measured, `results/*_summary.json`, `results/*_log.csv`):
 * **GRPO**: 116 steps × 32 questions × G = 8 = 29,696 sampled completions; 4 optimizer steps per
   sampled batch. Mean training reward 0.30 over the first 10 steps and 0.46 over the last 10
   (each step uses new questions, so the curve is noisy). 69% of groups had mixed rewards (non-zero
-  advantages); KL to the SFT reference rose steadily, ending at 0.063; the clip was active on 0.45% of tokens on
+  advantages); KL to the SFT reference rose to a peak of 0.070 (step 102) and ended at 0.063; the clip was active on 0.45% of tokens on
   average.
 
 Wall-clock on one node of a national HPC system with 2× NVIDIA A100 80GB PCIe
