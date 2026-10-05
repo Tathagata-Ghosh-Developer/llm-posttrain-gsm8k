@@ -1,5 +1,6 @@
 seed: 0
-n_eval: 500          # first 500 GSM8K test problems, identical for every model
+n_eval: null         # null = all 1,319 GSM8K test problems, identical for every model
+fewshot: 0           # worked training examples prepended to the prompt (0 = zero-shot)
 max_new_tokens: 300
 greedy_batch: 250    # prompts per generate() call
 n_samples: 8         # samples per problem for pass@k

@@ -20,7 +20,10 @@ def main():
     tok = load_tokenizer(args.model)
     model = load_model(args.model, torch.bfloat16, device)
     rows = load_gsm8k("test", cfg["n_eval"])
-    prompts = [format_prompt(r["question"]) for r in rows]
+    # optional k-shot prefix of worked training examples (used only as a reference for the base model)
+    shots = load_gsm8k("train", cfg["fewshot"]) if cfg["fewshot"] else []
+    prefix = "".join(format_prompt(s["question"]) + " " + s["solution"] + "\n\n" for s in shots)
+    prompts = [prefix + format_prompt(r["question"]) for r in rows]
 
     t0 = time.time()
     greedy_ids = generate(model, tok, prompts, temperature=0.0, max_new_tokens=cfg["max_new_tokens"],
@@ -42,6 +45,7 @@ def main():
         "model": label(args.model),
         "params": count_params(model),
         "n_eval": len(rows),
+        "fewshot": cfg["fewshot"],
         "greedy_pass@1": float(np.mean(greedy_correct)),
         "greedy_format_rate": float(np.mean(["####" in truncate_completion(t) for t in greedy])),
         "greedy_mean_tokens": float(np.mean([len(ids) for ids in greedy_ids])),

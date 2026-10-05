@@ -9,7 +9,7 @@
 #SBATCH --time=00:58:00
 #
 # Whole pipeline on one node with two GPUs, as two lanes that run side by side:
-#   GPU 0: SFT -> eval(SFT) -> DPO pairs + DPO -> eval(DPO)
+#   GPU 0: SFT -> eval(SFT) -> DPO pairs + DPO -> eval(DPO) -> eval(base, 4-shot)
 #   GPU 1: eval(base) -> [wait for SFT] -> GRPO -> eval(GRPO)
 # Every stage is skipped if its output already exists, so a resubmission resumes.
 #
@@ -51,6 +51,9 @@ lane_a() {
       --results "$RES" --set ${DPO_SET:-} &&
   run "$RES/eval_dpo.json" python -m src.evaluate --config configs/eval.yaml --model "$CK/dpo" --name dpo \
       --results "$RES" --set ${EVAL_SET:-}
+  # reference only: the base model with a 4-shot prompt (every other row is zero-shot)
+  run "$RES/eval_base_4shot.json" python -m src.evaluate --config configs/eval.yaml --model "$BASE" \
+      --name base_4shot --results "$RES" --set fewshot=4 ${EVAL_SET:-}
 }
 
 lane_b() {

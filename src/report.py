@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-STAGES = ["base", "sft", "dpo", "grpo"]
+STAGES = ["base", "base_4shot", "sft", "dpo", "grpo"]
 
 
 def read_csv(path):
@@ -34,7 +34,7 @@ def table(results_dir):
                 rows.append(json.load(f))
     if not rows:
         return
-    cols = ["name", "params", "n_eval", "greedy_pass@1", "pass@1", "pass@4", "pass@8", "greedy_format_rate"]
+    cols = ["name", "params", "n_eval", "fewshot", "greedy_pass@1", "pass@1", "pass@4", "pass@8", "greedy_format_rate"]
     with open(os.path.join(results_dir, "summary.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         w.writeheader()
